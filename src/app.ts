@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 
 import healthRoute from "./routes/health.route";
+import apiRoute from "./routes/api.route";
 
 const app = express();
 
@@ -12,13 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("tiny"));
 
-app.get("/api/v1", (req: Request, res: Response) => {
-  return res.json({
-    name: "TeamHub API",
-    version: "1.0.0",
-    status: "running",
-  });
-});
+app.use("/api/v1", apiRoute);
 
 app.use("/api/v1/health", healthRoute);
 app.use((req: Request, res: Response) => {
