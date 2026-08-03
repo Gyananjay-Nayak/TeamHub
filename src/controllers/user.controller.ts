@@ -1,66 +1,56 @@
-import { NextFunction, Request, Response, ErrorRequestHandler } from "express";
+import { NextFunction, Request, Response } from "express";
 
-interface UserData {
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+import {
+  createUser,
+  deleteUserById,
+  getUserList,
+  getUserById,
+  updateUserById,
+} from "../services/user.service";
+
+import { UserData } from "../types/user";
+
 export class UserController {
-  static userList: Array<{
-    firstName: string;
-    lastName: string;
-    email: string;
-    id: number;
-  }> = [];
-  private static nextId = 1;
-
-  static async createUser(req: Request, res: Response, next: NextFunction) {
+  static createUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { firstName, lastName, email }: UserData = req.body;
       if (!firstName || !lastName || !email) {
         throw new Error("firstName, lastname and email are required");
       }
-      if (!UserController.userList.find((user) => user.email === email)) {
-        const user = {
-          firstName,
-          lastName,
-          email,
-          id: UserController.nextId++,
-        };
-        UserController.userList.push(user);
-        return res.status(201).json({
-          success: true,
-          message: "User created successfully",
-          data: user,
-        });
-      } else {
+      const user = createUser({ firstName, lastName, email });
+      return res.status(201).json({
+        success: true,
+        message: "User created successfully",
+        data: user,
+      });
+    } catch (err: any) {
+      if (err.message === "DUPLICATE_EMAIL") {
         return res.status(409).json({
           success: false,
           message: "User with this email already exists",
           error: "DUPLICATE_EMAIL",
         });
       }
-    } catch (err) {
       next(err);
     }
   }
-  static async getUserList(req: Request, res: Response, next: NextFunction) {
+
+  static getUserList(req: Request, res: Response, next: NextFunction) {
     try {
+      const users = getUserList();
       return res.json({
         success: true,
-        data: UserController.userList,
+        data: users,
       });
     } catch (err) {
       next(err);
     }
   }
 
-  static async getuserById(req: Request, res: Response, next: NextFunction) {
+  static getUserById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const user = UserController.userList.find(
-        (user) => user.id === Number(id),
-      );
+      const user = getUserById(Number(id));
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -88,9 +78,7 @@ export class UserController {
           error: "ID_REQUIRED",
         });
       }
-      const user = UserController.userList.find(
-        (user) => user.id === Number(id),
-      );
+      const user = updateUserById(Number(id), { firstName, lastName, email });
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -98,16 +86,20 @@ export class UserController {
           error: "USER_NOT_FOUND",
         });
       }
-      user.firstName = firstName;
-      user.lastName = lastName;
-      user.email = email;
 
       return res.json({
         success: true,
         message: "User updated successfully",
         data: user,
       });
-    } catch (err) {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === "DUPLICATE_EMAIL") {
+        return res.status(409).json({
+          success: false,
+          message: "User with this email already exists",
+          error: "DUPLICATE_EMAIL",
+        });
+      }
       next(err);
     }
   }
@@ -115,9 +107,7 @@ export class UserController {
   static deleteUserById(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const user = UserController.userList.find(
-        (user) => user.id === Number(id),
-      );
+      const user = deleteUserById(Number(id));
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -125,9 +115,6 @@ export class UserController {
           error: "USER_NOT_FOUND",
         });
       }
-      UserController.userList = UserController.userList.filter(
-        (user) => user.id !== Number(id),
-      );
       return res.json({
         success: true,
         message: "User deleted successfully",
