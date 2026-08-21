@@ -7,6 +7,8 @@ import healthRoute from "./routes/health.route";
 import apiRoute from "./routes/api.route";
 import userRoute from "./routes/user.route";
 
+import errorHandler from "./middlewares/errorHandler";
+
 const app = express();
 
 app.use(helmet());
@@ -26,5 +28,7 @@ app.use((req: Request, res: Response) => {
     message: "Route not found",
   });
 });
+
+app.use(errorHandler);
 
 export default app;
