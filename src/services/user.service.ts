@@ -21,17 +21,20 @@ export const createUser = (userData: UserData): User => {
 export const getUserList = (): User[] => {
   return userList;
 };
-export const getUserById = (id: number): User | null => {
+export const getUserById = (id: number): User => {
   const user = userList.find((user) => user.id === id);
-  return user ?? null;
+  if (!user) {
+    throw new Error("USER_NOT_FOUND");
+  }
+  return user;
 };
 export const updateUserById = (
   id: number,
   userData: Partial<UserData>,
-): User | null => {
+): User => {
   const user = userList.find((user) => user.id === id);
   if (!user) {
-    return null;
+    throw new Error("USER_NOT_FOUND");
   }
   if (userData.firstName !== undefined) {
     user.firstName = userData.firstName;
@@ -48,10 +51,10 @@ export const updateUserById = (
   }
   return user;
 };
-export const deleteUserById = (id: number): User | null => {
+export const deleteUserById = (id: number): User => {
   const index = userList.findIndex((user) => user.id === id);
   if (index === -1) {
-    return null;
+    throw new Error("USER_NOT_FOUND");
   }
   return userList.splice(index, 1)[0];
 };
