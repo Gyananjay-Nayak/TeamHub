@@ -1,4 +1,5 @@
 import { type Request, type Response, type NextFunction } from "express";
+import { AppError } from "../errors/AppError";
 
 export default function errorHandler(
   err: Error,
@@ -6,17 +7,11 @@ export default function errorHandler(
   res: Response,
   _next: NextFunction,
 ) {
-  if (err.message === "DUPLICATE_EMAIL") {
-    return res.status(409).json({
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({
       success: false,
-      message: "User with this email already exists",
-      error: "DUPLICATE_EMAIL",
-    });
-  } else if (err.message === "USER_NOT_FOUND") {
-    return res.status(404).json({
-      success: false,
-      message: "User not found",
-      error: "USER_NOT_FOUND",
+      message: err.message,
+      error: err.errorCode,
     });
   } else {
     res.status(500).json({

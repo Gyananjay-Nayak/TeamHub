@@ -8,6 +8,8 @@ import {
   updateUserById,
 } from "../services/user.service";
 
+import { AppError } from "../errors/AppError";
+
 import { UserData } from "../types/user";
 
 export class UserController {
@@ -15,7 +17,11 @@ export class UserController {
     try {
       const { firstName, lastName, email }: UserData = req.body;
       if (!firstName || !lastName || !email) {
-        throw new Error("firstName, lastname and email are required");
+        throw new AppError(
+          "firstName, lastname and email are required",
+          400,
+          "VALIDATION_ERROR",
+        );
       }
       const user = createUser({ firstName, lastName, email });
       return res.status(201).json({
