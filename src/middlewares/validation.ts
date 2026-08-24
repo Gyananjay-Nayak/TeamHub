@@ -3,7 +3,7 @@ import { AppError } from "../errors/AppError";
 
 export function validateCreateUser(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ) {
   const { firstName, lastName, email } = req.body;
@@ -32,7 +32,11 @@ export function validateUpdateUser(
     return next(new AppError("Invalid user id", 400, "INVALID_USER_ID"));
   }
   const { firstName, lastName, email } = req.body;
-  if (!firstName && !lastName && !email) {
+  if (
+    firstName === undefined &&
+    lastName === undefined &&
+    email === undefined
+  ) {
     return next(
       new AppError("At least one field is required", 400, "VALIDATION_ERROR"),
     );
