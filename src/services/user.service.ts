@@ -1,33 +1,24 @@
 import { User, UserData } from "../types/user";
 import { AppError } from "../errors/AppError";
 
-const userList: User[] = [];
-let nextId = 1;
-
-export const findUserByEmail = (email: string): User | undefined => {
-  return userList.find((user) => user.email === email);
-};
+import { UserRepository } from "../repositories/user.repository";
 
 export const createUser = (userData: UserData): User => {
-  if (findUserByEmail(userData.email)) {
+  if (UserRepository.findByEmail(userData.email)) {
     throw new AppError(
       "User with this email already exists",
       409,
       "DUPLICATE_EMAIL",
     );
   }
-  const user: User = {
-    ...userData,
-    id: nextId++,
-  };
-  userList.push(user);
+  const user: User = UserRepository.create(userData);
   return user;
 };
 export const getUserList = (): User[] => {
-  return userList;
+  return UserRepository.findAll();
 };
 export const getUserById = (id: number): User => {
-  const user = userList.find((user) => user.id === id);
+  const user = UserRepository.findById(id);
   if (!user) {
     throw new AppError("User not found", 404, "USER_NOT_FOUND");
   }
@@ -37,18 +28,13 @@ export const updateUserById = (
   id: number,
   userData: Partial<UserData>,
 ): User => {
-  const user = userList.find((user) => user.id === id);
+  const user = UserRepository.findById(id);
   if (!user) {
     throw new AppError("User not found", 404, "USER_NOT_FOUND");
   }
-  if (userData.firstName !== undefined) {
-    user.firstName = userData.firstName;
-  }
-  if (userData.lastName !== undefined) {
-    user.lastName = userData.lastName;
-  }
   if (userData.email !== undefined) {
-    const existingUser = findUserByEmail(userData.email);
+    const existingUser = UserRepository.findByEmail(userData.email);
+
     if (existingUser && existingUser.id !== id) {
       throw new AppError(
         "User with this email already exists",
@@ -56,14 +42,14 @@ export const updateUserById = (
         "DUPLICATE_EMAIL",
       );
     }
-    user.email = userData.email;
   }
-  return user;
+  return UserRepository.update(user, userData);
 };
+
 export const deleteUserById = (id: number): User => {
-  const index = userList.findIndex((user) => user.id === id);
-  if (index === -1) {
+  const user = UserRepository.findById(id);
+  if (!user) {
     throw new AppError("User not found", 404, "USER_NOT_FOUND");
   }
-  return userList.splice(index, 1)[0];
+  return UserRepository.delete(user);
 };
